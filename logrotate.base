@@ -1,0 +1,13 @@
+# File must be owned by root for logrotate to run!
+# update-mirrors should detect log rotation without a signal from logrotate
+
+/srv/svn-github-mirrors/logs/update-mirrors.log {
+    rotate 90
+    daily
+    dateext
+    dateformat .%Y-%m-%d
+    extension .log
+    su richard richard
+    compress
+    missingok
+}

@@ -1,0 +1,8 @@
+/svn-clones/
+/logs/
+/logrotate.conf
+
+# Editors
+*.swp
+*.~
+*.bak
