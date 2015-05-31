@@ -140,10 +140,10 @@ git push -u --tags origin master
 
 Note
 ----
-* Caution: It is easy to mess up the local repository after the mirror has
-  started in such a way that the Git IDs change. This essentially trashes your
-  GitHub mirror and forces you to start over, which is very inconvenient for anyone
-  who is following your mirror.
+* Caution: When working with git svn, it is possible to make changes that
+  irreversibly destroy the connection betwen GitHub and SVN. Then the only way
+  to recover is to start again, which would which would create new git-ids and
+  mess up any clones, forks, or pull requests from the GitHub repository.
 * The update script can take hours to complete, even with few changes. This is
   due to svn2git needing to enumerate each tag for each revision, as well as the
   Git garbage collector being called both by svn2git and BFG.
@@ -166,6 +166,44 @@ git remote set-url origin <NEW URL>
 * I tried to rotate logs using Python's TimedRotatingFileHandler, but it  only works
   with long running processes. So I changed to logrotate, with all of the permissions
   mess that includes.
+
+
+Reasons the Script Has Failed
+-----------------------------
+* Adding a new tag with a lot of new commits caused there to be socket timeouts.
+  Repeatedly running `svn2git --rebase --metadata` solved the problem. The
+  script should handle this automatically now.
+* I was getting:
+
+```
+  Output from svn2git:
+  command failed:
+  2>&1 git svn fetch
+  error: invalid object 100644 bbcf350fe3a316a22a24b2526f97fd083c48d755 for
+<snip>
+```
+
+  The invalid object is one of the files that got removed by BFG because it is 59M
+  large. Something was causing git to take a closer look at this file, and notice
+  that it wasn't actually there. I found that I could manually advance the git svn
+  commit log, and everything would work fine.
+
+```
+git svn fetch -r 99458
+git svn fetch -r 99459
+svn2git --rebase --metadata
+./update-mirrors.py
+```
+
+* A change to the location of the SVN mirror.
+  Relocating a git svn mirror is much harder then just relocating an SVN repo.
+  Thank goodness for StackOverflow:
+
+  https://git.wiki.kernel.org/index.php/GitSvnSwitch
+
+  Either the information was out of date, or git2svn is smart enough to
+  manage the relocation, because I didn't have to go through the local rebase
+  process mentioned at kernel.org.
 
 
 Thanks
